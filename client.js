@@ -130,10 +130,15 @@ class UnoClient {
         this.socket.on('card_played', (data) => {
             this.gameState = data.gameState;
             this.isMyTurn = this.gameState.players[this.gameState.currentPlayerIndex].id === this.playerId;
+            
+            const player = this.gameState.players.find(p => p.id === data.playerId);
+            if (player && data.card) {
+                this.updateLastPlayedCards(data.card, player.name);
+            }
+            
             this.updateGameBoard();
             this.updateTurnIndicator();
             
-            // Handle power card effects for all player counts
             if (data.gameState.skipEffect) {
                 this.showSkipEffect(data.gameState.skipEffect);
             }
@@ -145,6 +150,13 @@ class UnoClient {
             }
             if (data.gameState.wildEffect) {
                 this.showWildEffect(data.gameState.wildEffect);
+            }
+            
+            if (data.gameState.swapEffect) {
+                this.showSwapEffect(data.gameState.swapEffect);
+            }
+            if (data.gameState.shuffleEffect) {
+                this.showShuffleEffect(data.gameState.shuffleEffect);
             }
             
             if (data.effect) {
@@ -203,6 +215,20 @@ class UnoClient {
 
         this.socket.on('error_message', (message) => {
             this.showError(message);
+        });
+
+        this.socket.on('wild4_challenge_available', (data) => {
+            if (data.challengeableBy === this.playerId) {
+                this.showChallengeDialog(data.playerId);
+            }
+        });
+
+        this.socket.on('wild4_challenge_result', (data) => {
+            if (data.success) {
+                this.showNotification(`${data.offender} played Wild Draw Four illegally! They draw 4 cards.`);
+            } else {
+                this.showNotification(`${data.challenger} challenged incorrectly! They draw 6 cards.`);
+            }
         });
     }
 
@@ -573,38 +599,51 @@ class UnoClient {
 
     displayLastPlayedCards() {
         const container = document.getElementById('lastPlayedCards');
+        if (!container) return;
+        
         container.innerHTML = '';
+        
+        if (this.lastPlayedCards.size === 0) {
+            container.innerHTML = '<p style="color: #999; font-size: 14px;">No cards played yet</p>';
+            return;
+        }
         
         this.lastPlayedCards.forEach((card, playerName) => {
             const playerDiv = document.createElement('div');
-            playerDiv.className = 'last-played-card';
+            playerDiv.className = 'last-played-item';
+            playerDiv.style.cssText = `
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 8px;
+                background: rgba(255,255,255,0.1);
+                border-radius: 8px;
+                margin-bottom: 8px;
+            `;
             
             const nameSpan = document.createElement('span');
-            nameSpan.className = 'player-name';
+            nameSpan.style.cssText = `
+                font-weight: bold;
+                color: white;
+                min-width: 80px;
+                font-size: 14px;
+            `;
             nameSpan.textContent = playerName;
             
             const cardDiv = document.createElement('div');
-            cardDiv.className = `card-display ${card.color}`;
-            if (card.color !== 'wild') {
-                cardDiv.textContent = card.value;
-            } else {
-                cardDiv.textContent = 'W';
-            }
-            
-            // Add matching indicator for current player
-            if (this.isMyTurn && this.hand.length > 0) {
-                const canMatch = this.hand.some(handCard => 
-                    handCard.color === card.color || 
-                    handCard.value === card.value ||
-                    handCard.color === 'wild' ||
-                    card.color === 'wild'
-                );
-                
-                const indicator = document.createElement('span');
-                indicator.className = `matching-indicator ${canMatch ? 'can-match' : 'cannot-match'}`;
-                indicator.textContent = canMatch ? '✓' : '✗';
-                cardDiv.appendChild(indicator);
-            }
+            cardDiv.className = `card ${card.color}`;
+            cardDiv.style.cssText = `
+                width: 50px;
+                height: 70px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 8px;
+                font-weight: bold;
+                font-size: 20px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            `;
+            cardDiv.textContent = this.getCardDisplay(card);
             
             playerDiv.appendChild(nameSpan);
             playerDiv.appendChild(cardDiv);
@@ -748,6 +787,107 @@ class UnoClient {
         setTimeout(() => {
             errorDiv.style.display = 'none';
         }, 5000);
+    }
+
+    showChallengeDialog(offenderId) {
+        const modal = document.createElement('div');
+        modal.className = 'challenge-modal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        `;
+        
+        const content = document.createElement('div');
+        content.style.cssText = `
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 400px;
+        `;
+        
+        content.innerHTML = `
+            <h3 style="color: #f44336; margin-bottom: 15px;">Wild Draw Four Challenge!</h3>
+            <p style="margin-bottom: 20px;">Someone played Wild Draw Four on you! Do you want to challenge?</p>
+            <p style="font-size: 14px; color: #666; margin-bottom: 20px;">
+                If they had a matching color card, they draw 4.<br>
+                If they didn't, YOU draw 6!
+            </p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button id="challengeBtn" style="background: #f44336; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Challenge!</button>
+                <button id="declineBtn" style="background: #4caf50; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Decline</button>
+            </div>
+        `;
+        
+        modal.appendChild(content);
+        document.body.appendChild(modal);
+        
+        const timeout = setTimeout(() => {
+            modal.remove();
+        }, 10000);
+        
+        document.getElementById('challengeBtn').addEventListener('click', () => {
+            clearTimeout(timeout);
+            this.socket.emit('challenge_wild4');
+            modal.remove();
+        });
+        
+        document.getElementById('declineBtn').addEventListener('click', () => {
+            clearTimeout(timeout);
+            modal.remove();
+        });
+    }
+
+    showSwapEffect(swapData) {
+        const notification = document.createElement('div');
+        notification.className = 'effect-notification swap-effect';
+        notification.textContent = `${swapData.fromPlayer} swapped hands with ${swapData.toPlayer}!`;
+        notification.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #ff9a9e, #fecfef);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 10px;
+            font-size: 20px;
+            font-weight: bold;
+            z-index: 10000;
+            animation: swapAnimation 2s ease-out forwards;
+        `;
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 2000);
+    }
+
+    showShuffleEffect(shuffleData) {
+        const notification = document.createElement('div');
+        notification.className = 'effect-notification shuffle-effect';
+        notification.textContent = 'ALL HANDS SHUFFLED AND REDEALT!';
+        notification.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #a18cd1, #fbc2eb);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 10px;
+            font-size: 20px;
+            font-weight: bold;
+            z-index: 10000;
+            animation: shuffleAnimation 2.5s ease-out forwards;
+        `;
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 2500);
     }
 }
 

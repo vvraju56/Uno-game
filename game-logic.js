@@ -1,46 +1,52 @@
 class UnoGame {
-  constructor() {
+  constructor(useExpansionCards = false) {
     this.colors = ['red', 'blue', 'green', 'yellow'];
-    this.validWildColors = ['red', 'blue', 'green', 'yellow']; // Standard UNO colors only
+    this.validWildColors = ['red', 'blue', 'green', 'yellow'];
     this.numberValues = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
     this.actionValues = ['skip', 'reverse', 'draw2'];
     this.values = [...this.numberValues, ...this.actionValues];
     this.wildCards = ['wild', 'wild4'];
+    this.expansionWildCards = useExpansionCards ? ['wildSwap', 'wildShuffle', 'wildCustom'] : [];
+    this.useExpansionCards = useExpansionCards;
   }
 
   createDeck() {
     const deck = [];
     
-    // Add colored cards (total 76 cards)
     for (const color of this.colors) {
-      // One 0 per color (4 cards total)
       deck.push({ id: `${color}_0`, color, value: '0' });
       
-      // Two of each 1-9 per color (72 cards total)
       for (const value of this.numberValues.slice(1)) {
         deck.push({ id: `${color}_${value}_1`, color, value });
         deck.push({ id: `${color}_${value}_2`, color, value });
       }
       
-      // Two of each action card per color (24 cards total)
       for (const value of this.actionValues) {
         deck.push({ id: `${color}_${value}_1`, color, value });
         deck.push({ id: `${color}_${value}_2`, color, value });
       }
     }
     
-    // Add wild cards (8 cards total)
     for (let i = 0; i < 4; i++) {
       deck.push({ id: `wild_${i}`, color: 'wild', value: 'wild' });
       deck.push({ id: `wild4_${i}`, color: 'wild', value: 'wild4' });
     }
     
-    // Verify deck size (should be 108 cards)
-    if (deck.length !== 108) {
-      throw new Error(`Deck has ${deck.length} cards, should have 108`);
+    if (this.useExpansionCards) {
+      for (let i = 0; i < 4; i++) {
+        deck.push({ id: `wildSwap_${i}`, color: 'wild', value: 'wildSwap' });
+        deck.push({ id: `wildShuffle_${i}`, color: 'wild', value: 'wildShuffle' });
+      }
+      for (let i = 0; i < 3; i++) {
+        deck.push({ id: `wildCustom_${i}`, color: 'wild', value: 'wildCustom' });
+      }
     }
     
-    // Shuffle deck thoroughly
+    const expectedSize = this.useExpansionCards ? 123 : 108;
+    if (deck.length !== expectedSize) {
+      throw new Error(`Deck has ${deck.length} cards, should have ${expectedSize}`);
+    }
+    
     for (let i = deck.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [deck[i], deck[j]] = [deck[j], deck[i]];
@@ -49,68 +55,37 @@ class UnoGame {
     return deck;
   }
 
-  createDeck() {
-    const deck = [];
-    
-    // Add colored cards (total 100 cards)
-    for (const color of this.colors) {
-      // One 0 per color (4 cards total)
-      deck.push({ id: `${color}_0`, color, value: '0' });
-      
-      // Two of each 1-9 per color (72 cards total)
-      for (const value of this.numberValues.slice(1)) {
-        deck.push({ id: `${color}_${value}_1`, color, value });
-        deck.push({ id: `${color}_${value}_2`, color, value });
-      }
-      
-      // Two of each action card per color (24 cards total)
-      for (const value of this.actionValues) {
-        deck.push({ id: `${color}_${value}_1`, color, value });
-        deck.push({ id: `${color}_${value}_2`, color, value });
-      }
+  getCardPoints(card) {
+    if (this.numberValues.includes(card.value)) {
+      return parseInt(card.value);
     }
-    
-    // Add wild cards (8 cards total)
-    for (let i = 0; i < 4; i++) {
-      deck.push({ id: `wild_${i}`, color: 'wild', value: 'wild' });
-      deck.push({ id: `wild4_${i}`, color: 'wild', value: 'wild4' });
+    if (this.actionValues.includes(card.value)) {
+      return 20;
     }
-    
-    // Verify deck size (should be 108 cards)
-    if (deck.length !== 108) {
-      throw new Error(`Deck has ${deck.length} cards, should have 108`);
+    if (card.value === 'wild' || card.value === 'wild4') {
+      return 50;
     }
-    
-    // Shuffle deck thoroughly
-    for (let i = deck.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [deck[i], deck[j]] = [deck[j], deck[i]];
+    if (['wildSwap', 'wildShuffle', 'wildCustom'].includes(card.value)) {
+      return 40;
     }
-    
-    // Add wild cards
-    for (let i = 0; i < 4; i++) {
-      deck.push({ id: `wild_${i}`, color: 'wild', value: 'wild' });
-      deck.push({ id: `wild4_${i}`, color: 'wild', value: 'wild4' });
-    }
-    
-    // Shuffle deck thoroughly
-    for (let i = deck.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [deck[i], deck[j]] = [deck[j], deck[i]];
-    }
-    
-    return deck;
+    return 0;
   }
 
-  createRoom(roomId) {
+  createRoom(roomId, customRules = {}) {
     const deck = this.createDeck();
     const discardPile = [];
     
-    // Draw first card (not wild)
     let firstCard;
     do {
       firstCard = deck.pop();
-    } while (firstCard.color === 'wild');
+      if (firstCard.value === 'wild4' || firstCard.value === 'wildSwap' || 
+          firstCard.value === 'wildShuffle' || firstCard.value === 'wildCustom') {
+        deck.unshift(firstCard);
+        continue;
+      }
+      break;
+    } while (true);
+    
     discardPile.push(firstCard);
 
     return {
@@ -120,10 +95,15 @@ class UnoGame {
       discardPile,
       currentPlayerIndex: 0,
       direction: 1,
-      currentColor: firstCard.color,
+      currentColor: firstCard.color === 'wild' ? null : firstCard.color,
       gameStarted: false,
       unoCallRequired: false,
-      lastPlayerToCallUno: null
+      lastPlayerToCallUno: null,
+      firstCardEffect: firstCard.value,
+      scores: {},
+      customRules: customRules,
+      wild4ChallengeWindow: false,
+      wild4ChallengableBy: null
     };
   }
 
@@ -158,17 +138,35 @@ class UnoGame {
       throw new Error('Need at least 2 players to start');
     }
     
-    // Deal 7 cards to each player
     for (const player of room.players) {
       player.hand = [];
       for (let i = 0; i < 7; i++) {
         player.hand.push(room.deck.pop());
       }
       player.handCount = player.hand.length;
+      if (!room.scores[player.id]) {
+        room.scores[player.id] = 0;
+      }
     }
     
     room.gameStarted = true;
-    room.currentPlayerIndex = Math.floor(Math.random() * room.players.length);
+    room.currentPlayerIndex = 0;
+    
+    const firstCard = room.discardPile[0];
+    if (firstCard.value === 'skip') {
+      room.currentPlayerIndex = this.getNextPlayerIndex(room);
+    } else if (firstCard.value === 'reverse') {
+      room.direction *= -1;
+      if (room.players.length === 2) {
+        room.currentPlayerIndex = this.getNextPlayerIndex(room);
+      }
+    } else if (firstCard.value === 'draw2') {
+      const firstPlayer = room.players[0];
+      this.makePlayerDrawCards(room, firstPlayer.id, 2);
+      room.currentPlayerIndex = this.getNextPlayerIndex(room);
+    } else if (firstCard.value === 'wild') {
+      room.currentColor = room.colors[Math.floor(Math.random() * room.colors.length)];
+    }
   }
 
   canPlayCard(card, topCard, currentColor) {
@@ -204,7 +202,7 @@ class UnoGame {
     console.log(`Reshuffled ${room.deck.length} cards from discard pile`);
   }
 
-  playCard(room, playerId, cardId, chosenColor = null) {
+  playCard(room, playerId, cardId, chosenColor = null, challengeWild4 = false, targetPlayerId = null, customRule = null) {
     const player = room.players.find(p => p.id === playerId);
     if (!player) throw new Error('Player not found');
     
@@ -223,110 +221,193 @@ class UnoGame {
       throw new Error('Cannot play this card');
     }
     
-    // Check UNO call requirement
+    const isWinningCard = player.hand.length === 1;
+    
+    if (card.value === 'wild4') {
+      const hasMatchingColor = player.hand.some(c => c.color === room.currentColor && c.id !== cardId);
+      room.wild4Illegal = hasMatchingColor;
+      room.wild4PlayerId = playerId;
+      room.wild4HandSnapshot = [...player.hand];
+      
+      const nextPlayerIndex = this.getNextPlayerIndex(room);
+      room.wild4ChallengableBy = room.players[nextPlayerIndex].id;
+      room.wild4ChallengeWindow = true;
+    }
+    
+    if (card.value === 'wildSwap' && !targetPlayerId) {
+      throw new Error('Must specify target player for Wild Swap Hands');
+    }
+    
+    if (card.value === 'wildCustom' && !customRule) {
+      throw new Error('Must specify custom rule for Wild Customizable');
+    }
+    
     if (player.hand.length === 2 && room.unoCallRequired && room.lastPlayerToCallUno !== playerId) {
       throw new Error('Must call UNO when you have one card left');
     }
     
-    // Remove card from hand and add to discard
     player.hand.splice(cardIndex, 1);
     player.handCount = player.hand.length;
     room.discardPile.push(card);
     
-    // Handle wild cards - only allow standard UNO colors
     if (card.color === 'wild') {
       if (this.validWildColors.includes(chosenColor)) {
         room.currentColor = chosenColor;
       } else {
-        room.currentColor = chosenColor || 'red'; // Default to red if invalid
+        room.currentColor = chosenColor || 'red';
       }
     } else {
       room.currentColor = card.color;
     }
     
-    // Reset UNO call requirement
     room.unoCallRequired = false;
     room.lastPlayerToCallUno = null;
     
-    // Handle card effects
     let nextPlayerIndex = this.getNextPlayerIndex(room);
     
-    // Apply power card effects according to official UNO rules
     switch (card.value) {
       case 'skip':
-        // Skip: Next player loses their turn entirely
         const skippedPlayer = room.players[nextPlayerIndex];
         console.log(`${skippedPlayer.name} skipped (${room.players.length} players)`);
-        
-        // Skip over the next player to the player after them
         room.currentPlayerIndex = this.getNextPlayerIndex(room);
-        
-        // Apply skip effect for animation
         room.skipEffect = { playerId: skippedPlayer.id, playerName: skippedPlayer.name };
         break;
         
       case 'reverse':
-        // Reverse: Change direction of play
         room.direction *= -1;
         console.log(`Direction reversed to ${room.direction > 0 ? 'clockwise' : 'counter-clockwise'} (${room.players.length} players)`);
         
         if (room.players.length === 2) {
-          // With 2 players, reverse acts exactly like skip
           const skippedPlayer = room.players[nextPlayerIndex];
           room.currentPlayerIndex = this.getNextPlayerIndex(room);
           room.skipEffect = { playerId: skippedPlayer.id, playerName: skippedPlayer.name };
         } else {
-          // With 3+ players, just change direction and pass turn normally
           room.currentPlayerIndex = nextPlayerIndex;
         }
-        
-        // Apply reverse effect for animation
         room.reverseEffect = true;
         break;
         
       case 'draw2':
-        // Draw Two: Next player draws 2 cards and loses their turn
         const draw2Target = room.players[nextPlayerIndex];
-        console.log(`${draw2Target.name} draws 2 cards (${room.players.length} players)`);
-        
+        console.log(`${draw2Target.name} draws 2 cards and loses turn (${room.players.length} players)`);
         this.makePlayerDrawCards(room, draw2Target.id, 2);
         
-        // Skip the player who drew cards
         room.currentPlayerIndex = this.getNextPlayerIndex(room);
-        
-        // Apply draw effect for animation
-        room.drawEffect = { count: 2, playerId: draw2Target.id, playerName: draw2Target.name };
+        room.drawEffect = { 
+          count: 2, 
+          playerId: draw2Target.id, 
+          playerName: draw2Target.name,
+          canStack: false,
+          turnSkipped: true
+        };
         break;
         
       case 'wild4':
-        // Wild Draw Four: Player chooses color, next player draws 4 cards and loses turn
         const wild4Target = room.players[nextPlayerIndex];
-        console.log(`${wild4Target.name} draws 4 cards (${room.players.length} players)`);
+        console.log(`${wild4Target.name} targeted by Wild Draw Four (${room.players.length} players)`);
         
         this.makePlayerDrawCards(room, wild4Target.id, 4);
         
-        // Skip the player who drew cards
         room.currentPlayerIndex = this.getNextPlayerIndex(room);
-        
-        // Apply wild draw four effect for animation
-        room.wildEffect = { count: 4, playerId: wild4Target.id, playerName: wild4Target.name };
+        room.wildEffect = { 
+          count: 4, 
+          playerId: wild4Target.id, 
+          playerName: wild4Target.name,
+          challengeable: true,
+          turnSkipped: true
+        };
         break;
         
       case 'wild':
-        // Wild: Player chooses color, turn passes normally
         room.currentPlayerIndex = nextPlayerIndex;
-        
-        // Apply wild effect for animation
         room.wildEffect = { colorChosen: true };
         break;
         
+      case 'wildSwap':
+        if (!isWinningCard) {
+          const targetPlayer = room.players.find(p => p.id === targetPlayerId);
+          if (!targetPlayer) throw new Error('Target player not found');
+          
+          const tempHand = [...player.hand];
+          player.hand = [...targetPlayer.hand];
+          targetPlayer.hand = tempHand;
+          
+          player.handCount = player.hand.length;
+          targetPlayer.handCount = targetPlayer.hand.length;
+          
+          room.swapEffect = { 
+            fromPlayer: player.name, 
+            toPlayer: targetPlayer.name 
+          };
+        }
+        room.currentPlayerIndex = nextPlayerIndex;
+        room.wildEffect = { colorChosen: true };
+        break;
+        
+      case 'wildShuffle':
+        if (!isWinningCard) {
+          const allCards = [];
+          for (const p of room.players) {
+            allCards.push(...p.hand);
+            p.hand = [];
+            p.handCount = 0;
+          }
+          
+          for (let i = allCards.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [allCards[i], allCards[j]] = [allCards[j], allCards[i]];
+          }
+          
+          let cardIndex = 0;
+          let dealFromIndex = nextPlayerIndex;
+          for (let i = 0; i < room.players.length; i++) {
+            const pIndex = (dealFromIndex + i) % room.players.length;
+            const cardsToDeal = Math.floor(allCards.length / room.players.length) + 
+              (i < (allCards.length % room.players.length) ? 1 : 0);
+            
+            for (let j = 0; j < cardsToDeal && cardIndex < allCards.length; j++) {
+              room.players[pIndex].hand.push(allCards[cardIndex++]);
+            }
+            room.players[pIndex].handCount = room.players[pIndex].hand.length;
+          }
+          
+          room.shuffleEffect = { triggered: true };
+        }
+        room.currentPlayerIndex = nextPlayerIndex;
+        room.wildEffect = { colorChosen: true };
+        break;
+        
+      case 'wildCustom':
+        if (customRule && room.customRules && room.customRules[customRule]) {
+          room.customRules[customRule](room, playerId);
+        }
+        room.currentPlayerIndex = nextPlayerIndex;
+        room.wildEffect = { colorChosen: true, customRule };
+        break;
+        
       default:
-        // Number cards: Pass turn normally
         room.currentPlayerIndex = nextPlayerIndex;
     }
     
-    // Check for winner
     const winner = player.hand.length === 0 ? player : null;
+    
+    if (winner) {
+      let roundScore = 0;
+      for (const p of room.players) {
+        if (p.id !== winner.id) {
+          for (const c of p.hand) {
+            roundScore += this.getCardPoints(c);
+          }
+        }
+      }
+      room.scores[winner.id] = (room.scores[winner.id] || 0) + roundScore;
+      room.roundWinner = { player: winner, score: roundScore };
+      
+      const gameWinner = Object.entries(room.scores).find(([id, score]) => score >= 500);
+      if (gameWinner) {
+        room.gameWinner = room.players.find(p => p.id === gameWinner[0]);
+      }
+    }
     
     return {
       playedCard: card,
@@ -391,14 +472,80 @@ class UnoGame {
     if (!target) throw new Error('Target player not found');
     
     if (target.hand.length === 1 && room.lastPlayerToCallUno !== targetId) {
-      // Challenge successful - target draws 2 cards
       this.makePlayerDrawCards(room, targetId, 2);
       return { success: true, penaltyCards: 2 };
     }
     
-    // Challenge failed - challenger draws 2 cards
     this.makePlayerDrawCards(room, challengerId, 2);
     return { success: false, penaltyCards: 2 };
+  }
+
+  challengeWild4(room, challengerId) {
+    if (!room.wild4ChallengeWindow) {
+      throw new Error('Challenge window has closed');
+    }
+    
+    if (challengerId !== room.wild4ChallengableBy) {
+      throw new Error('Only the affected player may challenge');
+    }
+    
+    room.wild4ChallengeWindow = false;
+    
+    const offender = room.players.find(p => p.id === room.wild4PlayerId);
+    const challenger = room.players.find(p => p.id === challengerId);
+    
+    if (room.wild4Illegal) {
+      const returnCardIndex = room.discardPile.findIndex(c => 
+        c.value === 'wild4' && room.discardPile[room.discardPile.length - 1] === c
+      );
+      
+      if (returnCardIndex !== -1 && room.wild4HandSnapshot) {
+        room.discardPile.pop();
+        offender.hand = [...room.wild4HandSnapshot];
+        offender.handCount = offender.hand.length;
+        
+        const targetIndex = room.players.findIndex(p => p.id === challengerId);
+        room.currentPlayerIndex = targetIndex;
+      }
+      
+      this.makePlayerDrawCards(room, room.wild4PlayerId, 4);
+      
+      const result = { 
+        success: true, 
+        penaltyCards: 4, 
+        offender: offender.name,
+        challenger: challenger.name,
+        reason: 'Had matching color card'
+      };
+      
+      room.wild4PlayerId = null;
+      room.wild4Illegal = null;
+      room.wild4HandSnapshot = null;
+      room.wild4ChallengableBy = null;
+      
+      return result;
+    } else {
+      this.makePlayerDrawCards(room, challengerId, 6);
+      
+      const result = { 
+        success: false, 
+        penaltyCards: 6, 
+        offender: offender.name,
+        challenger: challenger.name,
+        reason: 'Wild Draw Four was legal'
+      };
+      
+      room.wild4PlayerId = null;
+      room.wild4Illegal = null;
+      room.wild4HandSnapshot = null;
+      room.wild4ChallengableBy = null;
+      
+      return result;
+    }
+  }
+
+  canStackDrawTwo(room, playerId) {
+    return false;
   }
 
   getNextPlayerIndex(room) {
@@ -415,22 +562,26 @@ class UnoGame {
         name: p.name,
         handCount: p.handCount || (p.hand ? p.hand.length : 0),
         connected: p.connected,
-        calledUno: p.calledUno || false
+        calledUno: p.calledUno || false,
+        score: room.scores[p.id] || 0
       })),
       discardTop: room.discardPile[room.discardPile.length - 1],
-      discardPile: room.discardPile, // Full discard pile for better UI
+      discardPile: room.discardPile,
       deckCount: room.deck.length,
       currentPlayerIndex: room.currentPlayerIndex,
       direction: room.direction,
       currentColor: room.currentColor,
       gameStarted: room.gameStarted,
       unoCallRequired: room.unoCallRequired,
-      // Power card effects for animations
       skipEffect: room.skipEffect || null,
       reverseEffect: room.reverseEffect || false,
       drawEffect: room.drawEffect || null,
       wildEffect: room.wildEffect || null,
-      totalPlayers: room.players.length
+      totalPlayers: room.players.length,
+      scores: room.scores,
+      roundWinner: room.roundWinner,
+      gameWinner: room.gameWinner,
+      wild4Challengeable: room.wild4PlayerId ? true : false
     };
   }
 }
