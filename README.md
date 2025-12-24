@@ -144,3 +144,39 @@ uno/
 ## License
 
 MIT License - feel free to use, modify, and distribute.
+# Deployment Platforms
+
+## Render
+
+1. Create account at [render.com](https://render.com)
+2. Click 'New+' → 'Web Service'
+3. Connect your GitHub repository
+4. Configure:
+   - **Build Command**: `npm install`
+   - **Start Command**: `node server.js`
+   - **Environment Variables**: PORT=3000
+5. Deploy!
+
+## Railway
+
+1. Visit [railway.app](https://railway.app)
+2. Click 'New Project' → 'Deploy from GitHub repo'
+3. Select your repository
+4. Add environment variable: PORT=3000
+5. Deploy!
+
+## Heroku
+
+1. Install Heroku CLI: `npm install -g heroku`
+2. Login: `heroku login`
+3. Create app: `heroku create`
+4. Deploy: `git push heroku master`
+
+## Replit
+
+1. Visit [replit.com](https://replit.com)
+2. Click 'Create Repl'
+3. Choose Node.js template
+4. Upload files or import from GitHub
+5. Click 'Run'
+
