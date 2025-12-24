@@ -269,8 +269,17 @@ class UnoGame {
       case 'skip':
         const skippedPlayer = room.players[nextPlayerIndex];
         console.log(`${skippedPlayer.name} skipped (${room.players.length} players)`);
-        room.currentPlayerIndex = this.getNextPlayerIndex(room);
-        room.skipEffect = { playerId: skippedPlayer.id, playerName: skippedPlayer.name };
+        
+        if (room.players.length === 2) {
+          // In 2-player mode, Skip acts exactly like Reverse - same player plays again
+          const nextToSkip = room.players[nextPlayerIndex];
+          room.currentPlayerIndex = this.getNextPlayerIndex(room);
+          room.skipEffect = { playerId: nextToSkip.id, playerName: nextToSkip.name };
+        } else {
+          // In 3+ player mode, skip the next player
+          room.currentPlayerIndex = this.getNextPlayerIndex(room);
+          room.skipEffect = { playerId: skippedPlayer.id, playerName: skippedPlayer.name };
+        }
         break;
         
       case 'reverse':
