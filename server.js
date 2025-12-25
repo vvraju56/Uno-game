@@ -1,3 +1,4 @@
+
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -272,7 +273,7 @@ function getCardEffect(card) {
   return effects[card.value] || null;
 }
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
   console.log('UNO server running on port ' + PORT);
   console.log('Visit http://localhost:' + PORT + ' to play');
