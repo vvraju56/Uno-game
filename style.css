@@ -931,7 +931,7 @@ body {
 
 /* Footer Styles */
 .modern-footer {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    background: linear-gradient(135deg, #000000 0%, #0a0a0a 25%, #1a1a2e 50%, #16213e 75%, #0f3460 100%);
     color: #ffffff;
     padding: 60px 20px 20px;
     margin-top: auto;
@@ -956,7 +956,7 @@ body {
     font-size: 2em;
     font-weight: 700;
     margin-bottom: 15px;
-    background: linear-gradient(135deg, #ff79ee, #ff6bb3);
+    background: linear-gradient(135deg, #4a90e2, #357abd);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -982,7 +982,8 @@ body {
     align-items: center;
     justify-content: center;
     text-decoration: none;
-    font-size: 1.2em;
+    font-size: 1.1em;
+    color: rgba(255, 255, 255, 0.9);
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -991,10 +992,11 @@ body {
 }
 
 .social-btn.glass-btn:hover {
-    background: rgba(255, 121, 238, 0.2);
-    border-color: rgba(255, 121, 238, 0.4);
+    background: rgba(74, 144, 226, 0.2);
+    border-color: rgba(74, 144, 226, 0.4);
+    color: #4a90e2;
     transform: translateY(-3px);
-    box-shadow: 0 12px 40px rgba(255, 121, 238, 0.3);
+    box-shadow: 0 12px 40px rgba(74, 144, 226, 0.3);
 }
 
 .footer-columns {
@@ -1008,7 +1010,7 @@ body {
     font-size: 1.1em;
     font-weight: 600;
     margin-bottom: 20px;
-    color: #ff79ee;
+    color: #4a90e2;
 }
 
 .footer-column ul {
@@ -1036,12 +1038,12 @@ body {
     height: 2px;
     bottom: -2px;
     left: 0;
-    background: #ff79ee;
+    background: #4a90e2;
     transition: width 0.3s ease;
 }
 
 .footer-column ul li a:hover {
-    color: #ff79ee;
+    color: #4a90e2;
     transform: translateX(5px);
 }
 
@@ -1050,9 +1052,10 @@ body {
 }
 
 .footer-bottom {
+    background: linear-gradient(135deg, #0a0a0a 0%, #16213e 100%);
     text-align: center;
-    padding-top: 30px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 30px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .footer-bottom p {
@@ -1061,7 +1064,7 @@ body {
 }
 
 .accent-text {
-    color: #ff79ee;
+    color: #4a90e2;
     font-weight: 600;
 }
 
