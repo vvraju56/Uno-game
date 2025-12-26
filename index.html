@@ -8,179 +8,183 @@
     <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
-    <!-- Login/Lobby Screen -->
-    <div id="lobbyScreen" class="screen">
-        <div class="lobby-container">
-            <h1>UNO Multiplayer</h1>
-            <div class="menu-buttons">
-                <button id="createRoomBtn" class="btn-primary">Create Room</button>
-                <button id="joinRoomBtn" class="btn-secondary">Join Room</button>
-            </div>
-            
-            <div id="nameInput" class="input-group" style="display: none;">
-                <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
-                <div class="action-buttons">
-                    <button id="confirmNameBtn" class="btn-primary">Confirm</button>
-                    <button id="cancelNameBtn" class="btn-secondary">Cancel</button>
-                </div>
-            </div>
-            
-            <div id="joinRoomInput" class="input-group" style="display: none;">
-                <input type="text" id="roomCode" placeholder="Enter room code" maxlength="6">
-                <div class="action-buttons">
-                    <button id="confirmJoinBtn" class="btn-primary">Join</button>
-                    <button id="cancelJoinBtn" class="btn-secondary">Cancel</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Room Screen -->
-    <div id="roomScreen" class="screen" style="display: none;">
-        <div class="room-container">
-            <div class="room-header">
-                <h2>Room <span id="roomId"></span></h2>
-                <button id="startGameBtn" class="btn-primary" style="display: none;">Start Game</button>
-                <button id="leaveRoomBtn" class="btn-secondary">Leave Room</button>
-            </div>
-            
-            <div class="players-list">
-                <h3>Players</h3>
-                <div id="playersList"></div>
-            </div>
-            
-            <div id="waitingMessage" class="waiting-message">
-                Waiting for players to join...
-            </div>
-        </div>
-    </div>
-
-    <!-- Game Screen -->
-    <div id="gameScreen" class="screen" style="display: none;">
-        <div class="game-container">
-            <!-- Game Info Bar -->
-            <div class="game-info">
-                <div class="deck-info">
-                    <div class="deck-count">Deck: <span id="deckCount">0</span></div>
-                    <div class="current-turn">Turn: <span id="currentTurn"></span></div>
-                </div>
-                <div class="color-indicator">
-                    <span>Current Color:</span>
-                    <div id="currentColor" class="color-circle"></div>
-                </div>
-            </div>
-
-            <!-- Opponents Area -->
-            <div class="opponents-area">
-                <div id="opponents"></div>
-                
-                <!-- Last Played Cards Display -->
-                <div class="last-cards-display">
-                    <h3>Last Played Cards</h3>
-                    <div id="lastPlayedCards"></div>
-                </div>
-            </div>
-
-            <!-- Game Board -->
-            <div class="game-board">
-                <div class="discard-pile">
-                    <div id="discardCard" class="card"></div>
-                </div>
-                <button id="drawCardBtn" class="draw-button">Draw Card</button>
-                <button id="unoBtn" class="uno-button" style="display: none;">UNO!</button>
-            </div>
-
-            <!-- Player Hand -->
-            <div class="player-hand">
-                <div id="playerHand" class="hand-cards"></div>
-            </div>
-
-            <!-- Color Picker Modal -->
-            <div id="colorPicker" class="modal" style="display: none;">
-                <div class="modal-content">
-                    <h3>Choose a color</h3>
-                    <div class="color-options">
-                        <button class="color-btn red" data-color="red"></button>
-                        <button class="color-btn yellow" data-color="yellow"></button>
-                        <button class="color-btn green" data-color="green"></button>
-                        <button class="color-btn blue" data-color="blue"></button>
+    <div class="page-wrapper">
+        <main class="main-content">
+            <!-- Login/Lobby Screen -->
+            <div id="lobbyScreen" class="screen">
+                <div class="lobby-container">
+                    <h1>UNO Multiplayer</h1>
+                    <div class="menu-buttons">
+                        <button id="createRoomBtn" class="btn-primary">Create Room</button>
+                        <button id="joinRoomBtn" class="btn-secondary">Join Room</button>
+                    </div>
+                    
+                    <div id="nameInput" class="input-group" style="display: none;">
+                        <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
+                        <div class="action-buttons">
+                            <button id="confirmNameBtn" class="btn-primary">Confirm</button>
+                            <button id="cancelNameBtn" class="btn-secondary">Cancel</button>
+                        </div>
+                    </div>
+                    
+                    <div id="joinRoomInput" class="input-group" style="display: none;">
+                        <input type="text" id="roomCode" placeholder="Enter room code" maxlength="6">
+                        <div class="action-buttons">
+                            <button id="confirmJoinBtn" class="btn-primary">Join</button>
+                            <button id="cancelJoinBtn" class="btn-secondary">Cancel</button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Game Over Modal -->
-            <div id="gameOverModal" class="modal" style="display: none;">
-                <div class="modal-content">
-                    <h2>Game Over!</h2>
-                    <p id="winnerMessage"></p>
-                    <button id="playAgainBtn" class="btn-primary">Play Again</button>
+            <!-- Room Screen -->
+            <div id="roomScreen" class="screen" style="display: none;">
+                <div class="room-container">
+                    <div class="room-header">
+                        <h2>Room <span id="roomId"></span></h2>
+                        <button id="startGameBtn" class="btn-primary" style="display: none;">Start Game</button>
+                        <button id="leaveRoomBtn" class="btn-secondary">Leave Room</button>
+                    </div>
+                    
+                    <div class="players-list">
+                        <h3>Players</h3>
+                        <div id="playersList"></div>
+                    </div>
+                    
+                    <div id="waitingMessage" class="waiting-message">
+                        Waiting for players to join...
+                    </div>
                 </div>
             </div>
 
-            <!-- Error Message -->
-            <div id="errorMessage" class="error-message" style="display: none;"></div>
-        </div>
-    </div>
+            <!-- Game Screen -->
+            <div id="gameScreen" class="screen" style="display: none;">
+                <div class="game-container">
+                    <!-- Game Info Bar -->
+                    <div class="game-info">
+                        <div class="deck-info">
+                            <div class="deck-count">Deck: <span id="deckCount">0</span></div>
+                            <div class="current-turn">Turn: <span id="currentTurn"></span></div>
+                        </div>
+                        <div class="color-indicator">
+                            <span>Current Color:</span>
+                            <div id="currentColor" class="color-circle"></div>
+                        </div>
+                    </div>
 
-    <!-- Font Awesome v6 CDN:
+                    <!-- Opponents Area -->
+                    <div class="opponents-area">
+                        <div id="opponents"></div>
+                        
+                        <!-- Last Played Cards Display -->
+                        <div class="last-cards-display">
+                            <h3>Last Played Cards</h3>
+                            <div id="lastPlayedCards"></div>
+                        </div>
+                    </div>
+
+                    <!-- Game Board -->
+                    <div class="game-board">
+                        <div class="discard-pile">
+                            <div id="discardCard" class="card"></div>
+                        </div>
+                        <button id="drawCardBtn" class="draw-button">Draw Card</button>
+                        <button id="unoBtn" class="uno-button" style="display: none;">UNO!</button>
+                    </div>
+
+                    <!-- Player Hand -->
+                    <div class="player-hand">
+                        <div id="playerHand" class="hand-cards"></div>
+                    </div>
+
+                    <!-- Color Picker Modal -->
+                    <div id="colorPicker" class="modal" style="display: none;">
+                        <div class="modal-content">
+                            <h3>Choose a color</h3>
+                            <div class="color-options">
+                                <button class="color-btn red" data-color="red"></button>
+                                <button class="color-btn yellow" data-color="yellow"></button>
+                                <button class="color-btn green" data-color="green"></button>
+                                <button class="color-btn blue" data-color="blue"></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Game Over Modal -->
+                    <div id="gameOverModal" class="modal" style="display: none;">
+                        <div class="modal-content">
+                            <h2>Game Over!</h2>
+                            <p id="winnerMessage"></p>
+                            <button id="playAgainBtn" class="btn-primary">Play Again</button>
+                        </div>
+                    </div>
+
+                    <!-- Error Message -->
+                    <div id="errorMessage" class="error-message" style="display: none;"></div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Font Awesome v6 CDN:
 https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css
 -->
-    <!-- Footer -->
-    <footer class="modern-footer">
-        <div class="footer-container">
-            <div class="footer-brand">
-                <h3 class="brand-title">UNO Multiplayer</h3>
-                <p class="brand-description">Experience modern web development with cutting-edge design and seamless user interactions.</p>
-                <div class="social-links">
-                    <a href="https://vvraju.netlify.app/" class="social-btn glass-btn" target="_blank" rel="noopener">
-                        <i class="fa-solid fa-globe"></i>
-                    </a>
-                    <a href="https://github.com/vvraju56" class="social-btn glass-btn" target="_blank" rel="noopener">
-                        <i class="fa-brands fa-github"></i>
-                    </a>
-                    <a href="https://www.linkedin.com/in/vishnuraju-v-757b9929b" class="social-btn glass-btn" target="_blank" rel="noopener">
-                        <i class="fa-brands fa-linkedin-in"></i>
-                    </a>
+        <!-- Footer -->
+        <footer class="modern-footer">
+            <div class="footer-container">
+                <div class="footer-brand">
+                    <h3 class="brand-title">UNO Multiplayer</h3>
+                    <p class="brand-description">Experience modern web development with cutting-edge design and seamless user interactions.</p>
+                    <div class="social-links">
+                        <a href="https://vvraju.netlify.app/" class="social-btn glass-btn" target="_blank" rel="noopener">
+                            <i class="fa-solid fa-globe"></i>
+                        </a>
+                        <a href="https://github.com/vvraju56" class="social-btn glass-btn" target="_blank" rel="noopener">
+                            <i class="fa-brands fa-github"></i>
+                        </a>
+                        <a href="https://www.linkedin.com/in/vishnuraju-v-757b9929b" class="social-btn glass-btn" target="_blank" rel="noopener">
+                            <i class="fa-brands fa-linkedin-in"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="footer-columns">
+                    <div class="footer-column">
+                        <h4>Features</h4>
+                        <ul>
+                            <li><a href="#">Responsive Design</a></li>
+                            <li><a href="#">Performance Optimization</a></li>
+                            <li><a href="#">Modern UI/UX</a></li>
+                            <li><a href="#">Cross-browser Support</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="footer-column">
+                        <h4>Resources</h4>
+                        <ul>
+                            <li><a href="#">Documentation</a></li>
+                            <li><a href="#">API Reference</a></li>
+                            <li><a href="#">Code Examples</a></li>
+                            <li><a href="#">Best Practices</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="footer-column">
+                        <h4>Support</h4>
+                        <ul>
+                            <li><a href="#">Help Center</a></li>
+                            <li><a href="#">Contact Us</a></li>
+                            <li><a href="#">Bug Reports</a></li>
+                            <li><a href="#">Community Forum</a></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
             
-            <div class="footer-columns">
-                <div class="footer-column">
-                    <h4>Features</h4>
-                    <ul>
-                        <li><a href="#">Responsive Design</a></li>
-                        <li><a href="#">Performance Optimization</a></li>
-                        <li><a href="#">Modern UI/UX</a></li>
-                        <li><a href="#">Cross-browser Support</a></li>
-                    </ul>
-                </div>
-                
-                <div class="footer-column">
-                    <h4>Resources</h4>
-                    <ul>
-                        <li><a href="#">Documentation</a></li>
-                        <li><a href="#">API Reference</a></li>
-                        <li><a href="#">Code Examples</a></li>
-                        <li><a href="#">Best Practices</a></li>
-                    </ul>
-                </div>
-                
-                <div class="footer-column">
-                    <h4>Support</h4>
-                    <ul>
-                        <li><a href="#">Help Center</a></li>
-                        <li><a href="#">Contact Us</a></li>
-                        <li><a href="#">Bug Reports</a></li>
-                        <li><a href="#">Community Forum</a></li>
-                    </ul>
-                </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 UNO Multiplayer. All rights reserved. Made with ❤️ by <span class="accent-text">VV</span></p>
             </div>
-        </div>
-        
-        <div class="footer-bottom">
-            <p>&copy; 2024 UNO Multiplayer. All rights reserved. Made with ❤️ by <span class="accent-text">VV</span></p>
-        </div>
-    </footer>
+        </footer>
+    </div>
 
     <script src="client.js"></script>
 </body>
