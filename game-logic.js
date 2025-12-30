@@ -169,13 +169,30 @@ class UnoGame {
     }
   }
 
-  canPlayCard(card, topCard, currentColor) {
-    if (!topCard || !currentColor) return false;
-    
-    return card.color === currentColor ||
-           card.value === topCard.value ||
-           card.color === 'wild';
-  }
+   canPlayCard(card, topCard, currentColor) {
+     if (!topCard || !currentColor) return false;
+     
+     return card.color === currentColor ||
+            card.value === topCard.value ||
+            card.color === 'wild';
+   }
+
+   // Authoritative validation for Wild Draw Four play restriction (optional strict mode)
+   validateWildDrawFourPlay(room, player, card) {
+     // In strict mode, Wild Draw Four can only be played if player has NO matching color cards
+     if (room.customRules && room.customRules.strictWildDrawFour) {
+       const hasMatchingColor = player.hand.some(c => 
+         c.color === room.currentColor && c.id !== card.id
+       );
+       if (hasMatchingColor) {
+         return {
+           legal: false,
+           reason: 'Wild Draw Four can only be played when you have no matching color cards'
+         };
+       }
+     }
+     return { legal: true };
+   }
 
   drawCard(room) {
     if (room.deck.length === 0) {
@@ -223,16 +240,18 @@ class UnoGame {
     
     const isWinningCard = player.hand.length === 1;
     
-    if (card.value === 'wild4') {
-      const hasMatchingColor = player.hand.some(c => c.color === room.currentColor && c.id !== cardId);
-      room.wild4Illegal = hasMatchingColor;
-      room.wild4PlayerId = playerId;
-      room.wild4HandSnapshot = [...player.hand];
-      
-      const nextPlayerIndex = this.getNextPlayerIndex(room);
-      room.wild4ChallengableBy = room.players[nextPlayerIndex].id;
-      room.wild4ChallengeWindow = true;
-    }
+     if (card.value === 'wild4') {
+       // Validate Wild Draw Four play if strict mode is enabled
+       const validation = this.validateWildDrawFourPlay(room, player, card);
+       const hasMatchingColor = player.hand.some(c => c.color === room.currentColor && c.id !== cardId);
+       room.wild4Illegal = hasMatchingColor && (room.customRules && room.customRules.strictWildDrawFour);
+       room.wild4PlayerId = playerId;
+       room.wild4HandSnapshot = [...player.hand];
+       
+       const nextPlayerIndex = this.getNextPlayerIndex(room);
+       room.wild4ChallengableBy = room.players[nextPlayerIndex].id;
+       room.wild4ChallengeWindow = true;
+     }
     
     if (card.value === 'wildSwap' && !targetPlayerId) {
       throw new Error('Must specify target player for Wild Swap Hands');
@@ -260,70 +279,99 @@ class UnoGame {
       room.currentColor = card.color;
     }
     
-    room.unoCallRequired = false;
-    room.lastPlayerToCallUno = null;
-    
-    let nextPlayerIndex = this.getNextPlayerIndex(room);
+     room.unoCallRequired = false;
+     room.lastPlayerToCallUno = null;
+     
+     // Clear previous power card effects
+     room.skipEffect = null;
+     room.reverseEffect = false;
+     room.drawEffect = null;
+     room.wildEffect = null;
+     room.swapEffect = null;
+     room.shuffleEffect = null;
+     
+     let nextPlayerIndex = this.getNextPlayerIndex(room);
     
     switch (card.value) {
       case 'skip':
+        // Skip card: next player loses their turn entirely
         const skippedPlayer = room.players[nextPlayerIndex];
         console.log(`${skippedPlayer.name} skipped (${room.players.length} players)`);
         
-        if (room.players.length === 2) {
-          // In 2-player mode, Skip acts exactly like Reverse - same player plays again
-          const nextToSkip = room.players[nextPlayerIndex];
-          room.currentPlayerIndex = this.getNextPlayerIndex(room);
-          room.skipEffect = { playerId: nextToSkip.id, playerName: nextToSkip.name };
-        } else {
-          // In 3+ player mode, skip the next player
-          room.currentPlayerIndex = this.getNextPlayerIndex(room);
-          room.skipEffect = { playerId: skippedPlayer.id, playerName: skippedPlayer.name };
-        }
+        // Skip the next player - current player -> player after skipped player
+        // We need to advance twice: once to skip, once to get the actual next player
+        room.currentPlayerIndex = nextPlayerIndex; // Move to skipped player first
+        room.currentPlayerIndex = this.getNextPlayerIndex(room); // Then move to player after them
+        room.skipEffect = { 
+          playerId: skippedPlayer.id, 
+          playerName: skippedPlayer.name,
+          playersCount: room.players.length
+        };
         break;
         
       case 'reverse':
+        // Reverse card: changes direction of play
         room.direction *= -1;
         console.log(`Direction reversed to ${room.direction > 0 ? 'clockwise' : 'counter-clockwise'} (${room.players.length} players)`);
         
         if (room.players.length === 2) {
+          // With 2 players, Reverse acts exactly like Skip - current player plays again
           const skippedPlayer = room.players[nextPlayerIndex];
-          room.currentPlayerIndex = this.getNextPlayerIndex(room);
-          room.skipEffect = { playerId: skippedPlayer.id, playerName: skippedPlayer.name };
+          // Keep current player (don't change currentPlayerIndex)
+          room.skipEffect = { 
+            playerId: skippedPlayer.id, 
+            playerName: skippedPlayer.name,
+            reverseIn2Player: true
+          };
         } else {
-          room.currentPlayerIndex = nextPlayerIndex;
+          // With 3+ players, only direction changes, turn passes to next player in new direction
+          // nextPlayerIndex was calculated before direction change, so recalculate
+          const actualNextPlayer = (room.currentPlayerIndex + room.direction + room.players.length) % room.players.length;
+          room.currentPlayerIndex = actualNextPlayer;
         }
-        room.reverseEffect = true;
+        room.reverseEffect = { 
+          direction: room.direction > 0 ? 'clockwise' : 'counter-clockwise',
+          playersCount: room.players.length
+        };
         break;
         
       case 'draw2':
+        // Draw Two card: next player draws exactly 2 cards and loses their turn
         const draw2Target = room.players[nextPlayerIndex];
         console.log(`${draw2Target.name} draws 2 cards and loses turn (${room.players.length} players)`);
         this.makePlayerDrawCards(room, draw2Target.id, 2);
         
-        room.currentPlayerIndex = this.getNextPlayerIndex(room);
+        // Move to player after the target (who skipped their turn)
+        room.currentPlayerIndex = nextPlayerIndex; // Move to target first
+        room.currentPlayerIndex = this.getNextPlayerIndex(room); // Then to player after target
         room.drawEffect = { 
           count: 2, 
           playerId: draw2Target.id, 
           playerName: draw2Target.name,
-          canStack: false,
-          turnSkipped: true
+          canStack: false, // No stacking by default for authoritative rules
+          turnSkipped: true,
+          playersCount: room.players.length
         };
         break;
         
       case 'wild4':
+        // Wild Draw Four card: player chooses color, next player draws 4 cards and loses turn
         const wild4Target = room.players[nextPlayerIndex];
         console.log(`${wild4Target.name} targeted by Wild Draw Four (${room.players.length} players)`);
         
         this.makePlayerDrawCards(room, wild4Target.id, 4);
         
-        room.currentPlayerIndex = this.getNextPlayerIndex(room);
+        // Move to player after the target (who skipped their turn)
+        room.currentPlayerIndex = nextPlayerIndex; // Move to target first
+        room.currentPlayerIndex = this.getNextPlayerIndex(room); // Then to player after target
         room.wildEffect = { 
           count: 4, 
           playerId: wild4Target.id, 
           playerName: wild4Target.name,
           challengeable: true,
-          turnSkipped: true
+          turnSkipped: true,
+          playersCount: room.players.length,
+          chosenColor: chosenColor
         };
         break;
         
@@ -563,7 +611,7 @@ class UnoGame {
     return nextIndex;
   }
 
-  getGameState(room) {
+   getGameState(room) {
     return {
       roomId: room.roomId,
       players: room.players.map(p => ({
@@ -590,7 +638,8 @@ class UnoGame {
       scores: room.scores,
       roundWinner: room.roundWinner,
       gameWinner: room.gameWinner,
-      wild4Challengeable: room.wild4PlayerId ? true : false
+      wild4Challengeable: room.wild4PlayerId ? true : false,
+      powerCardResolved: true // Authoritative server confirmation
     };
   }
 }

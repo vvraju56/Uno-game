@@ -264,11 +264,11 @@ io.on('connection', socket => {
 
 function getCardEffect(card) {
   const effects = {
-    'skip': 'Next player skipped!',
-    'reverse': 'Direction reversed!',
-    'draw2': 'Next player draws 2 cards!',
+    'skip': 'Next player loses their turn!',
+    'reverse': 'Direction of play reversed!',
+    'draw2': 'Next player draws 2 cards and loses turn!',
     'wild': 'Color changed!',
-    'wild4': 'Next player draws 4 cards!'
+    'wild4': 'Next player draws 4 cards and loses turn!'
   };
   return effects[card.value] || null;
 }
