@@ -1,0 +1,312 @@
+/* UNO Game Styles - Clean and Simple */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: linear-gradient(135deg, #1e293b, #2a2a3e);
+  color: white;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  background: rgba(0,0,0,0.1);
+  padding: 1rem 2rem;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+h1 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin: 0;
+  color: #fbbf24;
+}
+
+h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+  color: #f1f5f9;
+}
+
+h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #e5e7eb;
+}
+
+p {
+  margin: 0;
+  color: #d1d5db;
+}
+
+main {
+  flex: 1;
+  padding: 2rem;
+  gap: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+section {
+  background: rgba(255,255,255,0.05);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+input, button {
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+input {
+  background: rgba(0,0,0,0.3);
+  color: white;
+  outline: none;
+  width: 100%;
+}
+
+button {
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+button:hover {
+  opacity: 0.8;
+}
+
+button:active {
+  opacity: 0.6;
+  transform: scale(0.95);
+}
+
+/* Button styles */
+.create-button {
+  background: linear-gradient(45deg, #3b82f6, #1d4ed8);
+  color: white;
+}
+
+.join-button {
+  background: linear-gradient(45deg, #059669, #1d976);
+  color: white;
+}
+
+.start-button {
+  background: linear-gradient(45deg, #f59e0b, #d97706);
+  color: white;
+}
+
+.draw-button {
+  background: linear-gradient(45deg, #6366f1, #4b5563);
+  color: white;
+}
+
+.uno-button {
+  background: linear-gradient(45deg, #ec4899, #dc2626);
+  color: white;
+}
+
+/* Table styles */
+.table-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.current-color {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.color-button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: bold;
+  transition: transform 0.1s;
+}
+
+.color-button:hover {
+  transform: scale(1.05);
+}
+
+.color-button.active {
+  transform: scale(0.95);
+  box-shadow: 0 0 0 4px rgba(255,255,255,0.3);
+}
+
+.red { background: #ef4444; }
+.blue { background: #3b82f6; }
+.green { background: #10b981; }
+.yellow { background: #f59e0b; }
+
+/* Card styles */
+.cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+  gap: 0.5rem;
+}
+
+.card {
+  background: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 2.5/3.5;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+}
+
+.card.small {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  min-width: 50px;
+  min-height: 70px;
+}
+
+.card-number {
+  font-size: 1.25rem;
+  color: white;
+}
+
+.card-color {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.8);
+  margin-top: 0.25rem;
+}
+
+/* Wild card gradient */
+.card.wild {
+  background: linear-gradient(135deg, #1e293b, #2d3748);
+  border: 2px solid #ffd700;
+}
+
+/* Player list styles */
+.players-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.player-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  background: rgba(255,255,255,0.05);
+  border-radius: 0.5rem;
+}
+
+/* UNO penalty styles */
+.uno-penalty {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(220, 38, 38, 0.9);
+  border-radius: 0.5rem;
+  border: 2px solid #ef4444;
+}
+
+.uno-penalty h3 {
+  color: #ef4444;
+  margin-bottom: 0.5rem;
+}
+
+.uno-penalty p {
+  color: #f87171;
+  margin-bottom: 0.5rem;
+}
+
+.uno-penalty-cards {
+  font-size: 1.25rem;
+  color: #fca5a5;
+  font-weight: bold;
+}
+
+/* Status message */
+.status-message {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(0,0,0,0.3);
+  border-radius: 0.5rem;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* Turn indicator */
+.turn-indicator {
+  padding: 1rem;
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: 0.5rem;
+  text-align: center;
+  font-weight: bold;
+  color: #10b981;
+}
+
+/* Controls section */
+.controls {
+  display: flex;
+  gap: 1rem;
+}
+
+.control-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  main {
+    flex-direction: column;
+    padding: 1rem;
+  }
+  
+  .table-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .cards-container {
+    grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+    gap: 0.25rem;
+  }
+  
+  .control-buttons {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .cards-container {
+    grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+  }
+  
+  .card {
+    aspect-ratio: 2.5/3.5;
+    min-width: 40px;
+    min-height: 60px;
+    font-size: 0.6rem;
+  }
+}
