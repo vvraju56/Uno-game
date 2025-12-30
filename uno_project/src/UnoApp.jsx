@@ -140,17 +140,33 @@ export default function UnoApp({ serverUrl = SERVER_DEFAULT }) {
       }
     });
 
+    // Handle zero cards winner notifications (special celebration)
+    s.on("zero_cards_winner", (data) => {
+      if (data.playerId === myId) {
+        setStatusMsg(`🏆 VICTORY! You played all cards! 🎊`);
+        // Show victory celebration
+        setUnoPenalty({
+          cards: 0,
+          reason: 'Perfect game - all cards played!',
+          isWinner: true
+        });
+      } else {
+        const winner = players.find(p => p.id === data.playerId);
+        setStatusMsg(`🏆 ${winner?.name} reached zero cards and won! 🎊`);
+      }
+    });
+
     // Handle game winner notifications
     s.on("game_winner", (data) => {
       if (data.playerId === myId) {
-        setStatusMsg(`🎉 You won! Reason: ${data.reason}`);
+        if (!unoPenalty?.isWinner) {
+          // Regular win (not zero cards)
+          setStatusMsg(`🎉 You won! Reason: ${data.reason}`);
+        }
       } else {
         const winner = players.find(p => p.id === data.playerId);
         setStatusMsg(`🎮 ${winner?.name} won! Reason: ${data.reason}`);
       }
-      
-      // Clear any UNO penalty state when game ends
-      setUnoPenalty(null);
     });
 
     return () => s.disconnect();

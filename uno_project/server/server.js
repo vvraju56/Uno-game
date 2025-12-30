@@ -195,11 +195,25 @@ io.on('connection', (socket) => {
       room.unoCallRequired = false;
       room.lastPlayerToCallUno = null;
       
+      // Special notification for reaching zero cards
+      io.to(roomId).emit('zero_cards_winner', {
+        playerId,
+        playerName: player.name,
+        cardsRemaining: 0,
+        message: `${player.name} played all cards and won! 🎉`,
+        timestamp: new Date().toISOString()
+      });
+      
       io.to(roomId).emit('game_winner', {
         playerId,
         playerName: player.name,
-        reason: 'Played all cards successfully'
+        reason: 'Played all cards successfully',
+        cardsRemaining: player.hand.length,
+        finalHand: player.hand,
+        timestamp: new Date().toISOString()
       });
+      
+      console.log(`🎉 ${player.name} reached zero cards and won!`);
       
       // Handle game end
       room.gameEnded = true;
