@@ -132,6 +132,27 @@ io.on('connection', (socket) => {
         }
       }
     }
+    
+    // Check for UNO penalty (player has 2 cards and didn't call UNO)
+    const currentPlayer = r.players.find(p => p.id === socket.id);
+    if (currentPlayer && currentPlayer.hand.length === 2 && !r.unoCallRequired) {
+      // Player should have called UNO but didn't - trigger penalty
+      for (let i = 0; i < 2; i++) {
+        if (!r.deck.length) r.deck = createDeck();
+        currentPlayer.hand.push(r.deck.shift());
+      }
+      currentPlayer.handCount = currentPlayer.hand.length;
+      
+      io.to(roomId).emit('uno_penalty', { 
+        playerId: socket.id,
+        playerName: currentPlayer.name,
+        penaltyCards: 2,
+        reason: 'Failed to call UNO when having 2 cards'
+      });
+      
+      console.log(`${currentPlayer.name} penalized: +2 cards for not calling UNO`);
+    }
+    
     // advance turn
     r.currentPlayerIndex = (r.currentPlayerIndex + r.direction + r.players.length) % r.players.length;
     broadcastRoom(roomId);
@@ -139,6 +160,54 @@ io.on('connection', (socket) => {
 
   socket.on('call_uno', ({ roomId }) => {
     io.to(roomId).emit('message', `${socket.id} called UNO!`);
+  });
+
+  // Check for UNO penalty (when someone plays their second-to-last card)
+  socket.on('check_uno_penalty', ({ roomId, playerId }) => {
+    const room = rooms[roomId];
+    if (!room) return;
+    
+    const player = room.players.find(p => p.id === playerId);
+    if (!player) return;
+    
+    // Check if player has 2 cards and didn't call UNO when playing their second-to-last card
+    if (player.hand.length === 2 && !room.unoCallRequired) {
+      // Player should have called UNO but didn't - add 2 card penalty
+      const deck = createDeck();
+      for (let i = 0; i < 2; i++) {
+        player.hand.push(deck.pop());
+      }
+      player.handCount = player.hand.length;
+      
+      io.to(roomId).emit('uno_penalty', { 
+        playerId, 
+        playerName: player.name,
+        penaltyCards: 2,
+        reason: 'Failed to call UNO when playing second-to-last card'
+      });
+      
+      console.log(`${player.name} penalized: +2 cards for not calling UNO`);
+    }
+    
+    // Check if player has 0 cards (empty hand) and is winner
+    if (player.hand.length === 0) {
+      // Player is winner - they don't need to call UNO anymore
+      room.unoCallRequired = false;
+      room.lastPlayerToCallUno = null;
+      
+      io.to(roomId).emit('game_winner', {
+        playerId,
+        playerName: player.name,
+        reason: 'Played all cards successfully'
+      });
+      
+      // Handle game end
+      room.gameEnded = true;
+      setTimeout(() => {
+        // Could reset room here or start new round
+        console.log(`Game ended! Winner: ${player.name}`);
+      }, 2000);
+    }
   });
 
   socket.on('disconnect', () => {

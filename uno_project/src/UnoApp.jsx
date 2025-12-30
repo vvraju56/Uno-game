@@ -68,20 +68,19 @@ function CardView({ card, small }) {
   const isWild = card.color === "wild";
 
   return (
-    <motion.div
-      layout
+    <div
       className={`rounded-xl shadow-md p-3 min-w-[80px] ${small ? "text-xs p-2 min-w-[60px]" : "text-sm"}`}
       style={{ background: isWild ? "linear-gradient(45deg,#333, #666)" : card.color }}
     >
       <div className="font-bold text-white">{isWild ? card.value.toUpperCase() : card.value}</div>
       {!isWild && <div className="mt-2 text-white/70 text-[11px]">{card.color.toUpperCase()}</div>}
-    </motion.div>
+    </div>
   );
 }
 
-// ---------- Socket events:
-// client -> server: create_room, join_room, start_game, play_card, draw_card, call_uno
-// server -> client: room_update, game_state, your_id, error
+  // ---------- Socket events:
+  // client -> server: create_room, join_room, start_game, play_card, draw_card, call_uno
+  // server -> client: room_update, game_state, your_id, error, uno_penalty, game_winner
 
 const SERVER_DEFAULT = import.meta.env.VITE_SERVER_URL || "http://localhost:4000";
 
@@ -96,6 +95,7 @@ export default function UnoApp({ serverUrl = SERVER_DEFAULT }) {
   const [myId, setMyId] = useState(null);
   const [statusMsg, setStatusMsg] = useState("");
   const [selectedColor, setSelectedColor] = useState(null);
+  const [unoPenalty, setUnoPenalty] = useState(null);
   const inputRoomRef = useRef(null);
 
   useEffect(() => {
@@ -126,8 +126,35 @@ export default function UnoApp({ serverUrl = SERVER_DEFAULT }) {
       setStatusMsg(e);
     });
 
+    // Handle UNO penalty notifications
+    s.on("uno_penalty", (data) => {
+      if (data.playerId === myId) {
+        // This player received a penalty
+        setUnoPenalty({
+          cards: data.penaltyCards,
+          reason: data.reason
+        });
+        setStatusMsg(`UNO Penalty: ${data.reason}`);
+        
+        // Hand will be updated in game_state event
+      }
+    });
+
+    // Handle game winner notifications
+    s.on("game_winner", (data) => {
+      if (data.playerId === myId) {
+        setStatusMsg(`🎉 You won! Reason: ${data.reason}`);
+      } else {
+        const winner = players.find(p => p.id === data.playerId);
+        setStatusMsg(`🎮 ${winner?.name} won! Reason: ${data.reason}`);
+      }
+      
+      // Clear any UNO penalty state when game ends
+      setUnoPenalty(null);
+    });
+
     return () => s.disconnect();
-  }, [serverUrl]);
+  }, [serverUrl, myId]);
 
   function createRoom() {
     if (!playerName) {
@@ -267,7 +294,27 @@ export default function UnoApp({ serverUrl = SERVER_DEFAULT }) {
         </section>
 
         <section className="mt-8">
-          <h3 className="text-xl font-semibold mb-3">Your Hand {myTurn ? " — Your Turn" : ""}</h3>
+        <h3 className="text-xl font-semibold mb-3">
+          Your Hand {myTurn ? " — Your Turn" : ""} 
+          {unoPenalty && (
+            <span className="ml-2 text-red-500 text-sm">
+              (Penalty: +{unoPenalty.cards} cards)
+            </span>
+          )}
+        </h3>
+        
+        {unoPenalty && (
+          <div className="mb-3 p-3 bg-red-900 rounded-lg">
+            <p className="text-red-200 text-sm">
+              <strong>UNO Penalty!</strong> {unoPenalty.reason}
+            </p>
+            <p className="text-red-300 text-xs mt-1">
+              You received +{unoPenalty.cards} penalty cards.
+            </p>
+          </div>
+        )}
+        
+        <h3 className="text-xl font-semibold mb-3">Your Hand {myTurn ? " — Your Turn" : ""}</h3>
           <div className="flex gap-3 overflow-x-auto py-2">
             {hand.map((c, idx) => (
               <div key={c.id} onClick={() => {
